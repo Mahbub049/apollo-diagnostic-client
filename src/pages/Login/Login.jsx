@@ -8,7 +8,7 @@ const Login = () => {
       <Navbar></Navbar>
       <div className="hero h-[80vh]">
         <div className="hero-content w-1/2 flex-col">
-          <div className="card w-full shadow-2xl">
+          <div className="card w-full my-24 shadow-2xl">
             <h3 className="font-bold text-5xl text-blue-500 mons mb-3">
               User Login
             </h3>
