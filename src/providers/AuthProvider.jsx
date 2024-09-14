@@ -1,8 +1,15 @@
-import { createUserWithEmailAndPassword, onAuthStateChanged, signInWithEmailAndPassword, signInWithPopup, signOut, updateProfile } from "firebase/auth";
+import {
+  createUserWithEmailAndPassword,
+  onAuthStateChanged,
+  signInWithEmailAndPassword,
+  signInWithPopup,
+  signOut,
+  updateProfile,
+} from "firebase/auth";
 import { createContext, useEffect, useState } from "react";
-import { auth } from './../firebase/firebase.config';
 import { GoogleAuthProvider } from "firebase/auth";
 import useAxiosPublic from "../hooks/useAxiosPublic";
+import { auth } from "./../firebase/firebase.config";
 
 export const AuthContext = createContext();
 
@@ -24,6 +31,27 @@ const AuthProvider = ({ children }) => {
       photoURL: image,
     });
   };
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+      const Email = currentUser?.email || user?.email;
+      const loggedMail = { email: Email };
+      setUser(currentUser);
+
+      if (currentUser) {
+        const userInfo = { email: currentUser.email };
+        axiosPublic.post("/jwt", userInfo).then((res) => {
+          if (res.data.token) {
+            localStorage.setItem("access-token", res.data.token);
+          }
+        });
+      } else {
+        localStorage.removeItem("access-token");
+      }
+      setLoading(false);
+    });
+    return () => unsubscribe();
+  }, []);
 
   const login = (email, password) => {
     setLoading(true);

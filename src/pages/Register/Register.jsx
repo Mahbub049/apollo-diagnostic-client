@@ -1,9 +1,11 @@
 import { FcGoogle } from "react-icons/fc";
 import Navbar from "../../components/Navbar";
-import { Link } from "react-router-dom";
-import { useEffect, useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { useContext, useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import useAxiosPublic from "../../hooks/useAxiosPublic";
+import { AuthContext } from "../../providers/AuthProvider";
+import Swal from "sweetalert2";
 
 const Register = () => {
   const axiosPublic = useAxiosPublic();
@@ -13,6 +15,9 @@ const Register = () => {
     watch,
     formState: { errors },
   } = useForm();
+  const { registerUser, updateUserInfo, googleLogin, setUser, user, loading } =
+    useContext(AuthContext);
+  const navigate = useNavigate();
 
   const image_hosting_key = import.meta.env.VITE_IMAGE_HOSTING_KEY;
   const image_hosting_api = `https://api.imgbb.com/1/upload?key=${image_hosting_key}`;
@@ -51,12 +56,18 @@ const Register = () => {
       const email = data.email;
       const password = data.password;
       const name = data.name;
+      const blood = data.blood;
+      const district = data.district;
+      const upazilla = data.upazilla;
       const image = res.data.data.display_url;
       const user = {
         email,
         name,
+        blood,
+        district,
+        upazilla,
         image,
-        badge: data.badge,
+        status: data.status,
       };
       registerUser(email, password)
         .then(() => {
@@ -84,12 +95,6 @@ const Register = () => {
                   });
                   navigate(location?.state ? location.state : "/");
                 });
-              // Swal.fire({
-              //     title: 'Success!',
-              //     text: 'Successfully Registered!',
-              //     icon: 'success',
-              //     confirmButtonText: 'Okay'
-              //   })
             })
             .catch(() => {
               Swal.fire({
@@ -108,11 +113,7 @@ const Register = () => {
             confirmButtonText: "Okay",
           });
         });
-
     }
-    const user = {
-      imageFile,
-    };
   };
 
   return (
