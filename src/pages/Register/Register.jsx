@@ -2,11 +2,26 @@ import { FcGoogle } from "react-icons/fc";
 import Navbar from "../../components/Navbar";
 import { Link } from "react-router-dom";
 import { useEffect, useState } from "react";
+import { useForm } from "react-hook-form";
+import useAxiosPublic from "../../hooks/useAxiosPublic";
 
 const Register = () => {
+  const axiosPublic = useAxiosPublic();
+  const {
+    register,
+    handleSubmit,
+    watch,
+    formState: { errors },
+  } = useForm();
+
+  const image_hosting_key = import.meta.env.VITE_IMAGE_HOSTING_KEY;
+  const image_hosting_api = `https://api.imgbb.com/1/upload?key=${image_hosting_key}`;
+
   const [districts, setDistricts] = useState([]);
   const [selectedDistricts, setSelectedDistricts] = useState("");
   const [upazillas, setUpazillas] = useState([]);
+
+  const bloods = ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"];
 
   useEffect(() => {
     fetch("https://bdapis.com/api/v1.2/districts/")
@@ -24,8 +39,81 @@ const Register = () => {
       .then((data) => setUpazillas(data.data.upazillas));
   };
 
-  console.log(upazillas)
+  const onSubmit = async (data) => {
+    data.status = "active";
+    const imageFile = { image: data.image[0] };
+    const res = await axiosPublic.post(image_hosting_api, imageFile, {
+      headers: {
+        "content-type": "multipart/form-data",
+      },
+    });
+    if (res.data.success) {
+      const email = data.email;
+      const password = data.password;
+      const name = data.name;
+      const image = res.data.data.display_url;
+      const user = {
+        email,
+        name,
+        image,
+        badge: data.badge,
+      };
+      registerUser(email, password)
+        .then(() => {
+          updateUserInfo(name, image)
+            .then(() => {
+              setUser({
+                displayName: name,
+                photoURL: image,
+                email: email,
+              });
+              fetch("http://localhost:5000/users", {
+                method: "POST",
+                headers: {
+                  "content-type": "application/json",
+                },
+                body: JSON.stringify(user),
+              })
+                .then((res) => res.json())
+                .then((data) => {
+                  Swal.fire({
+                    title: "Success!",
+                    text: "Successfully Registered!",
+                    icon: "success",
+                    confirmButtonText: "Okay",
+                  });
+                  navigate(location?.state ? location.state : "/");
+                });
+              // Swal.fire({
+              //     title: 'Success!',
+              //     text: 'Successfully Registered!',
+              //     icon: 'success',
+              //     confirmButtonText: 'Okay'
+              //   })
+            })
+            .catch(() => {
+              Swal.fire({
+                title: "Error!",
+                text: "Something is wrong",
+                icon: "error",
+                confirmButtonText: "Okay",
+              });
+            });
+        })
+        .catch(() => {
+          Swal.fire({
+            title: "Error!",
+            text: "User Already Exists",
+            icon: "error",
+            confirmButtonText: "Okay",
+          });
+        });
 
+    }
+    const user = {
+      imageFile,
+    };
+  };
 
   return (
     <div>
@@ -36,7 +124,7 @@ const Register = () => {
             <h3 className="font-bold text-5xl text-blue-500 mons mb-3">
               User Registration
             </h3>
-            <form className="card-body">
+            <form className="card-body" onSubmit={handleSubmit(onSubmit)}>
               <div className="form-control">
                 <label className="label">
                   <span className="label-text">Email</span>
@@ -46,6 +134,7 @@ const Register = () => {
                   placeholder="Email"
                   className="input input-bordered"
                   required
+                  {...register("email", { required: true })}
                 />
               </div>
               <div className="form-control">
@@ -57,6 +146,7 @@ const Register = () => {
                   placeholder="Name"
                   className="input input-bordered"
                   required
+                  {...register("name", { required: true })}
                 />
               </div>
               <div className="form-control">
@@ -65,6 +155,7 @@ const Register = () => {
                 </label>
                 <input
                   type="file"
+                  {...register("image", { required: true })}
                   className="file-input file-input-bordered file-input-info file-input-md w-full"
                 />
               </div>
@@ -72,18 +163,18 @@ const Register = () => {
                 <label className="label">
                   <span className="label-text">Blood Group</span>
                 </label>
-                <select className="select select-info w-full">
+                <select
+                  className="select select-info w-full"
+                  {...register("blood", { required: true })}
+                >
                   <option disabled selected>
                     Select Blood Group
                   </option>
-                  <option>A+</option>
-                  <option>A-</option>
-                  <option>B+</option>
-                  <option>B-</option>
-                  <option>AB+</option>
-                  <option>AB-</option>
-                  <option>O+</option>
-                  <option>O-</option>
+                  {bloods.map((blood, index) => (
+                    <option key={index} value={blood}>
+                      {blood}
+                    </option>
+                  ))}
                 </select>
               </div>
 
@@ -92,6 +183,7 @@ const Register = () => {
                   <span className="label-text">District</span>
                 </label>
                 <select
+                  {...register("district", { required: true })}
                   onChange={handleDistrictChange}
                   value={selectedDistricts}
                   className="select select-info w-full"
@@ -111,16 +203,20 @@ const Register = () => {
                 <label className="label">
                   <span className="label-text">Upazilla</span>
                 </label>
-                  <select className="select select-info w-full">
-                    <option disabled selected>
-                      Select Upazilla
-                    </option>
-                    {upazillas.length > 0 && upazillas.map((upazilla, idx) => (
+                <select
+                  className="select select-info w-full"
+                  {...register("upazilla", { required: true })}
+                >
+                  <option disabled selected>
+                    Select Upazilla
+                  </option>
+                  {upazillas.length > 0 &&
+                    upazillas.map((upazilla, idx) => (
                       <option className="text-black" key={idx} value={upazilla}>
                         {upazilla}
                       </option>
                     ))}
-                  </select>
+                </select>
               </div>
               <div className="form-control mt-3">
                 <label className="label">
@@ -131,16 +227,17 @@ const Register = () => {
                   placeholder="Password"
                   className="input input-bordered"
                   required
+                  {...register("password", { required: true })}
                 />
               </div>
               <div className="form-control mt-6">
                 <button className="btn bg-blue-500 text-white text-lg mons">
-                  Login
+                  Register
                 </button>
               </div>
             </form>
             <p className="font-semibold mb-2 mons">
-              Login using Different Platforms
+              Registration using Different Platforms
             </p>
             <div className="form-control mx-8">
               <button className="btn bg-white text-lg mons">
@@ -152,9 +249,9 @@ const Register = () => {
                 Already have an account?{" "}
                 <Link
                   className="text-blue-400 font-semibold underline"
-                  to="/register"
+                  to="/login"
                 >
-                  Register Now!
+                  Login Now!
                 </Link>
               </p>
             </div>

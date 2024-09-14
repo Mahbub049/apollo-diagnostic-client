@@ -50,7 +50,7 @@ const Login = () => {
               </button>
             </div>
             <div>
-                <p className="mt-2">Already have an account? <Link className="text-blue-400 font-semibold underline" to="/register">Register Now!</Link></p>
+                <p className="mt-2">Don't have an account? <Link className="text-blue-400 font-semibold underline" to="/register">Register Now!</Link></p>
             </div>
           </div>
         </div>

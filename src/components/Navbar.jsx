@@ -46,9 +46,9 @@ const Navbar = () => {
               </li>
             </ul>
           </div>
-          <a className="btn btn-ghost w-9/12">
+          <Link to={"/"} className="btn btn-ghost w-9/12">
             <img src="./../../../public/logo.png" alt="" />
-          </a>
+          </Link>
         </div>
         <div className="navbar-center hidden lg:flex text-lg">
           <ul className="menu menu-horizontal px-1">
